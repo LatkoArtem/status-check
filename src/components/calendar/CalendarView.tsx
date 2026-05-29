@@ -108,19 +108,18 @@ export function CalendarView() {
       <CalendarFilters />
 
       {/* Calendar */}
-      <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-card">
-        {commitments?.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
-            <CalendarDays className="h-10 w-10 opacity-30" />
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-card">
+        <FullCalendarComponent
+          events={events}
+          onEventClick={handleEventClick}
+          onDateClick={handleDateClick}
+          onEventDrop={handleEventDrop}
+        />
+        {commitments?.length === 0 && (
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+            <CalendarDays className="h-10 w-10 opacity-20" />
             <p className="text-sm">{t("calendar.empty")}</p>
           </div>
-        ) : (
-          <FullCalendarComponent
-            events={events}
-            onEventClick={handleEventClick}
-            onDateClick={handleDateClick}
-            onEventDrop={handleEventDrop}
-          />
         )}
       </div>
 

@@ -367,7 +367,7 @@ function ProjectsSection() {
           <div className="relative z-10 w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">
-                {modal.editId ? t("project.updated") : t("project.newProject")}
+                {modal.editId ? t("project.editProject") : t("project.newProject")}
               </h3>
               <button
                 onClick={closeModal}

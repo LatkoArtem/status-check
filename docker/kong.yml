@@ -1,0 +1,33 @@
+_format_version: "1.1"
+
+services:
+  - name: auth-v1
+    url: http://auth:9999
+    routes:
+      - name: auth-v1-route
+        strip_path: true
+        paths:
+          - /auth/v1
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - "*"
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Authorization
+            - Content-Type
+            - apikey
+            - X-Client-Info
+          exposed_headers:
+            - X-Kong-Upstream-Latency
+            - X-Kong-Proxy-Latency
+          credentials: true
+          max_age: 1728000
+          preflight_continue: false

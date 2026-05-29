@@ -33,7 +33,39 @@
 | Theme | next-themes |
 | Deploy | Vercel + Supabase |
 
-## Локальний запуск
+## Запуск через Docker (рекомендовано)
+
+Не потребує жодних налаштувань — усі значення за замовчуванням вже вбудовані.
+
+```bash
+git clone <repo-url>
+cd status-check
+docker compose up --build
+```
+
+Додаток доступний на [http://localhost:3000](http://localhost:3000)
+
+> Перший запуск займе ~3–5 хв (завантаження образів + білд Next.js).
+> Подальші запуски (`docker compose up`) стартують за секунди.
+
+### Seed-дані (опціонально)
+
+Зареєструйся на `/register`, потім в окремому терміналі:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres pnpm db:seed
+```
+
+### Зупинка
+
+```bash
+docker compose down          # зупинити, зберегти дані
+docker compose down -v       # зупинити + видалити дані БД
+```
+
+---
+
+## Локальний запуск (без Docker)
 
 ### 1. Встановити залежності
 

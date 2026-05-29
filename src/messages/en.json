@@ -97,6 +97,7 @@
     "updated": "Project updated",
     "deleted": "Project deleted",
     "newProject": "New Project",
+    "editProject": "Edit Project",
     "noProjects": "No projects"
   },
   "filters": {

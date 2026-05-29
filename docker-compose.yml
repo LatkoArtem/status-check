@@ -1,0 +1,139 @@
+# ── Status Check — Docker Compose ────────────────────────────────────────────
+#
+# Запуск:
+#   docker compose up --build
+#
+# Додаток буде доступний на http://localhost:3000
+#
+# Seed-дані (після реєстрації першого користувача):
+#   DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres pnpm db:seed
+#
+# Змінні за замовчуванням розраховані на локальну розробку.
+# Для кастомних значень створіть .env поруч із цим файлом.
+
+services:
+
+  # ── PostgreSQL (Supabase flavour: pg_cron, auth schema) ──────────────────
+  db:
+    image: supabase/postgres:15.8.1.060
+    restart: unless-stopped
+    ports:
+      - "54322:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
+      JWT_SECRET: ${JWT_SECRET:-super-secret-jwt-token-with-at-least-32-characters-long}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # ── GoTrue (Supabase Auth) ────────────────────────────────────────────────
+  auth:
+    image: public.ecr.aws/supabase/gotrue:v2.157.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://localhost:54321
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: "postgres://supabase_auth_admin:${POSTGRES_PASSWORD:-postgres}@db:5432/postgres"
+      GOTRUE_SITE_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      GOTRUE_URI_ALLOW_LIST: ""
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_SECRET: ${JWT_SECRET:-super-secret-jwt-token-with-at-least-32-characters-long}
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_SMTP_ADMIN_EMAIL: admin@example.com
+      GOTRUE_SMTP_HOST: ""
+      GOTRUE_SMTP_PORT: "25"
+      GOTRUE_SMTP_USER: ""
+      GOTRUE_SMTP_PASS: ""
+      GOTRUE_SMTP_SENDER_NAME: ""
+      GOTRUE_MAILER_URLPATHS_INVITE: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:9999/health 2>/dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # ── Kong (API gateway: routes /auth/v1/* → GoTrue) ───────────────────────
+  kong:
+    image: kong:2.8.1
+    restart: unless-stopped
+    depends_on:
+      auth:
+        condition: service_started
+    ports:
+      - "54321:8000"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+    volumes:
+      - ./docker/kong.yml:/home/kong/kong.yml:ro
+
+  # ── Migration (one-shot: applies SQL schema after auth is ready) ──────────
+  migrate:
+    image: postgres:15-alpine
+    depends_on:
+      auth:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGDATABASE: postgres
+    volumes:
+      - ./supabase/migrations/20260101000000_initial_schema.sql:/migration.sql:ro
+    command: >
+      sh -c "
+        psql -c 'CREATE PUBLICATION IF NOT EXISTS supabase_realtime;' &&
+        psql -f /migration.sql
+      "
+    restart: on-failure
+
+  # ── Next.js App ───────────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRFA0NiK7W9oraprfDjFwSidfp3_3liMkJwgDtgCelw}
+        NEXT_PUBLIC_APP_URL: http://localhost:3000
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      kong:
+        condition: service_started
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      # Internal URL для server-side запитів до GoTrue (з контейнера)
+      SUPABASE_INTERNAL_URL: http://kong:8000
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRFA0NiK7W9oraprfDjFwSidfp3_3liMkJwgDtgCelw}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hj04zWl196z2-SBc0}
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/postgres
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-onboarding@resend.dev}
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+volumes:
+  db-data:

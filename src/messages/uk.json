@@ -97,6 +97,7 @@
     "updated": "Проєкт оновлено",
     "deleted": "Проєкт видалено",
     "newProject": "Новий проєкт",
+    "editProject": "Редагувати проєкт",
     "noProjects": "Немає проєктів"
   },
   "filters": {

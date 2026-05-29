@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env*
+!.env.example
+node_modules
+.next
+supabase/.branches
+supabase/.temp
+CLAUDE.md
+README.md
+docker
