@@ -1,0 +1,139 @@
+{
+  "common": {
+    "loading": "Завантаження...",
+    "error": "Помилка",
+    "save": "Зберегти",
+    "cancel": "Скасувати",
+    "delete": "Видалити",
+    "edit": "Редагувати",
+    "create": "Створити",
+    "close": "Закрити",
+    "confirm": "Підтвердити",
+    "search": "Пошук...",
+    "noData": "Даних немає",
+    "clearFilters": "Очистити фільтри",
+    "actions": "Дії"
+  },
+  "auth": {
+    "login": "Увійти",
+    "register": "Зареєструватись",
+    "logout": "Вийти",
+    "email": "Електронна пошта",
+    "password": "Пароль",
+    "confirmPassword": "Підтвердити пароль",
+    "name": "Повне ім'я",
+    "forgotPassword": "Забули пароль?",
+    "noAccount": "Немає акаунту? Зареєструватись",
+    "hasAccount": "Вже є акаунт? Увійти",
+    "loginTitle": "Ласкаво просимо",
+    "loginSubtitle": "Введіть дані для входу",
+    "registerTitle": "Створити акаунт",
+    "registerSubtitle": "Заповніть форму для реєстрації",
+    "errors": {
+      "invalidEmail": "Невірний формат пошти",
+      "passwordTooShort": "Мінімум 8 символів",
+      "passwordsDoNotMatch": "Паролі не збігаються",
+      "nameRequired": "Ім'я обов'язкове",
+      "loginFailed": "Невірна пошта або пароль",
+      "registerFailed": "Помилка реєстрації. Спробуйте ще раз."
+    }
+  },
+  "nav": {
+    "calendar": "Календар",
+    "commitments": "Зобов'язання",
+    "settings": "Налаштування"
+  },
+  "calendar": {
+    "title": "Календар",
+    "newCommitment": "Нове зобов'язання",
+    "empty": "Немає зобов'язань. Додайте перше!",
+    "today": "Сьогодні",
+    "month": "Місяць",
+    "week": "Тиждень",
+    "list": "Список"
+  },
+  "commitment": {
+    "title": "Заголовок",
+    "description": "Опис",
+    "project": "Проєкт",
+    "executor": "Виконавець",
+    "checker": "Перевіряючий",
+    "deadline": "Дедлайн",
+    "author": "Автор",
+    "status": "Статус",
+    "createdAt": "Створено",
+    "updatedAt": "Оновлено",
+    "statuses": {
+      "to_check": "Очікує перевірки",
+      "expired": "Прострочено",
+      "done": "Виконано",
+      "not_actual": "Не актуально",
+      "ideas_backlog": "Ідеї / Беклог"
+    },
+    "created": "Зобов'язання створено",
+    "updated": "Зобов'язання оновлено",
+    "deleted": "Зобов'язання видалено",
+    "statusChanged": "Статус змінено",
+    "deleteConfirm": "Ви впевнені? Цю дію не можна скасувати.",
+    "noProject": "Без проєкту",
+    "noExecutor": "Не призначено",
+    "noChecker": "Не призначено",
+    "titleRequired": "Заголовок обов'язковий",
+    "deadlineRequired": "Дедлайн обов'язковий",
+    "selectProject": "Оберіть проєкт",
+    "selectExecutor": "Оберіть виконавця",
+    "selectChecker": "Оберіть перевіряючого",
+    "selectStatus": "Оберіть статус",
+    "changeStatus": "Змінити статус",
+    "newCommitment": "Нове зобов'язання",
+    "editCommitment": "Редагувати зобов'язання"
+  },
+  "project": {
+    "title": "Проєкти",
+    "name": "Назва",
+    "description": "Опис",
+    "color": "Колір",
+    "created": "Проєкт створено",
+    "updated": "Проєкт оновлено",
+    "deleted": "Проєкт видалено",
+    "newProject": "Новий проєкт",
+    "noProjects": "Немає проєктів"
+  },
+  "filters": {
+    "byProject": "Фільтр за проєктом",
+    "byChecker": "Фільтр за перевіряючим",
+    "byStatus": "Фільтр за статусом",
+    "allProjects": "Всі проєкти",
+    "allCheckers": "Всі перевіряючі",
+    "allStatuses": "Всі статуси"
+  },
+  "notifications": {
+    "title": "Сповіщення",
+    "markAsRead": "Позначити як прочитане",
+    "markAllAsRead": "Позначити всі як прочитані",
+    "noNotifications": "Немає сповіщень",
+    "types": {
+      "deadline_approaching": "Дедлайн наближається",
+      "status_changed": "Статус змінено",
+      "assigned": "Вас призначено"
+    }
+  },
+  "settings": {
+    "title": "Налаштування",
+    "users": "Користувачі",
+    "projects": "Проєкти",
+    "adminOnly": "Тільки для адміністраторів",
+    "adminOnlyDesc": "Ця сторінка доступна лише адміністраторам.",
+    "role": {
+      "admin": "Адміністратор",
+      "member": "Учасник"
+    },
+    "changeRole": "Змінити роль"
+  },
+  "errors": {
+    "generic": "Щось пішло не так",
+    "unauthorized": "Немає доступу",
+    "forbidden": "Заборонено",
+    "notFound": "Не знайдено"
+  }
+}

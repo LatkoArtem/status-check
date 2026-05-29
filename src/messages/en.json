@@ -1,0 +1,139 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "confirm": "Confirm",
+    "search": "Search...",
+    "noData": "No data",
+    "clearFilters": "Clear filters",
+    "actions": "Actions"
+  },
+  "auth": {
+    "login": "Sign In",
+    "register": "Sign Up",
+    "logout": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Full Name",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account? Sign Up",
+    "hasAccount": "Already have an account? Sign In",
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Enter your credentials to sign in",
+    "registerTitle": "Create an account",
+    "registerSubtitle": "Fill in the form to register",
+    "errors": {
+      "invalidEmail": "Invalid email format",
+      "passwordTooShort": "Minimum 8 characters",
+      "passwordsDoNotMatch": "Passwords do not match",
+      "nameRequired": "Name is required",
+      "loginFailed": "Invalid email or password",
+      "registerFailed": "Registration failed. Please try again."
+    }
+  },
+  "nav": {
+    "calendar": "Calendar",
+    "commitments": "Commitments",
+    "settings": "Settings"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "newCommitment": "New Commitment",
+    "empty": "No commitments. Add your first one!",
+    "today": "Today",
+    "month": "Month",
+    "week": "Week",
+    "list": "List"
+  },
+  "commitment": {
+    "title": "Title",
+    "description": "Description",
+    "project": "Project",
+    "executor": "Executor",
+    "checker": "Checker",
+    "deadline": "Deadline",
+    "author": "Author",
+    "status": "Status",
+    "createdAt": "Created at",
+    "updatedAt": "Updated at",
+    "statuses": {
+      "to_check": "To Check",
+      "expired": "Expired",
+      "done": "Done",
+      "not_actual": "Not Actual",
+      "ideas_backlog": "Ideas / Backlog"
+    },
+    "created": "Commitment created",
+    "updated": "Commitment updated",
+    "deleted": "Commitment deleted",
+    "statusChanged": "Status changed",
+    "deleteConfirm": "Are you sure? This action cannot be undone.",
+    "noProject": "No project",
+    "noExecutor": "Unassigned",
+    "noChecker": "Unassigned",
+    "titleRequired": "Title is required",
+    "deadlineRequired": "Deadline is required",
+    "selectProject": "Select project",
+    "selectExecutor": "Select executor",
+    "selectChecker": "Select checker",
+    "selectStatus": "Select status",
+    "changeStatus": "Change status",
+    "newCommitment": "New Commitment",
+    "editCommitment": "Edit Commitment"
+  },
+  "project": {
+    "title": "Projects",
+    "name": "Name",
+    "description": "Description",
+    "color": "Color",
+    "created": "Project created",
+    "updated": "Project updated",
+    "deleted": "Project deleted",
+    "newProject": "New Project",
+    "noProjects": "No projects"
+  },
+  "filters": {
+    "byProject": "Filter by project",
+    "byChecker": "Filter by checker",
+    "byStatus": "Filter by status",
+    "allProjects": "All projects",
+    "allCheckers": "All checkers",
+    "allStatuses": "All statuses"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAsRead": "Mark as read",
+    "markAllAsRead": "Mark all as read",
+    "noNotifications": "No notifications",
+    "types": {
+      "deadline_approaching": "Deadline approaching",
+      "status_changed": "Status changed",
+      "assigned": "You've been assigned"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "users": "Users",
+    "projects": "Projects",
+    "adminOnly": "Admin only",
+    "adminOnlyDesc": "This page is only accessible to administrators.",
+    "role": {
+      "admin": "Administrator",
+      "member": "Member"
+    },
+    "changeRole": "Change role"
+  },
+  "errors": {
+    "generic": "Something went wrong",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Forbidden",
+    "notFound": "Not found"
+  }
+}

@@ -1,0 +1,43 @@
+# Claude memory — НІКОЛИ не комітити
+CLAUDE.md
+CLAUDE_CODE_PROMPT.md
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Next.js
+.next/
+out/
+
+# Dependencies
+node_modules/
+
+# Build output
+build/
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel/
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Drizzle
+drizzle/meta/
+
+# TypeScript
+*.tsbuildinfo
+
+# Coverage
+coverage/
+
+# pnpm
+.pnpm-store/
