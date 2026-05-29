@@ -1,16 +1,24 @@
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
+import { LoginForm } from "~/components/auth/LoginForm";
+
+export async function generateMetadata() {
+  const t = await getTranslations("auth");
+  return { title: `${t("loginTitle")} — Status Check` };
+}
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-8 shadow-sm">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-bold text-foreground">Status Check</h1>
-          <p className="text-sm text-muted-foreground">Ласкаво просимо</p>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md space-y-6 rounded-xl border border-border bg-card p-8 shadow-sm">
+        <div className="space-y-1 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Status Check
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Введіть дані для входу
+          </p>
         </div>
-        <p className="text-center text-sm text-muted-foreground">
-          Сторінка входу — реалізується у Phase 2
-        </p>
+        <LoginForm />
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
   boolean,
   pgEnum,
@@ -76,6 +77,57 @@ export const notifications = pgTable("notifications", {
     .defaultNow()
     .notNull(),
 });
+
+// Relations (needed for db.query.* relational API)
+export const profilesRelations = relations(profiles, ({ many }) => ({
+  authoredCommitments: many(commitments, { relationName: "author" }),
+  executorCommitments: many(commitments, { relationName: "executor" }),
+  checkerCommitments: many(commitments, { relationName: "checker" }),
+  notifications: many(notifications),
+  projects: many(projects),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  createdBy: one(profiles, {
+    fields: [projects.createdBy],
+    references: [profiles.id],
+  }),
+  commitments: many(commitments),
+}));
+
+export const commitmentsRelations = relations(commitments, ({ one, many }) => ({
+  author: one(profiles, {
+    fields: [commitments.authorId],
+    references: [profiles.id],
+    relationName: "author",
+  }),
+  executor: one(profiles, {
+    fields: [commitments.responsibleExecutorId],
+    references: [profiles.id],
+    relationName: "executor",
+  }),
+  checker: one(profiles, {
+    fields: [commitments.responsibleCheckerId],
+    references: [profiles.id],
+    relationName: "checker",
+  }),
+  project: one(projects, {
+    fields: [commitments.projectId],
+    references: [projects.id],
+  }),
+  notifications: many(notifications),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(profiles, {
+    fields: [notifications.userId],
+    references: [profiles.id],
+  }),
+  commitment: one(commitments, {
+    fields: [notifications.commitmentId],
+    references: [commitments.id],
+  }),
+}));
 
 export type Profile = typeof profiles.$inferSelect;
 export type NewProfile = typeof profiles.$inferInsert;

@@ -1,3 +1,4 @@
+import type { AbstractIntlMessages } from "next-intl";
 import { getRequestConfig } from "next-intl/server";
 import { routing } from "./routing";
 
@@ -8,12 +9,11 @@ export default getRequestConfig(async ({ requestLocale }) => {
     locale = routing.defaultLocale;
   }
 
-  return {
-    locale,
-    messages: (
-      await (locale === "uk"
-        ? import("../messages/uk.json")
-        : import("../messages/en.json"))
-    ).default as Record<string, unknown>,
-  };
+  const messages = (
+    await (locale === "uk"
+      ? import("../messages/uk.json")
+      : import("../messages/en.json"))
+  ).default as unknown as AbstractIntlMessages;
+
+  return { locale, messages };
 });
