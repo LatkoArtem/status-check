@@ -1,7 +1,10 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import SuperJSON from "superjson";
 import { ZodError } from "zod";
+import { eq } from "drizzle-orm";
 import { createClient } from "~/lib/supabase/server";
+import { db } from "~/server/db";
+import { profiles } from "~/server/db/schema";
 
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const supabase = await createClient();
@@ -57,11 +60,10 @@ export const protectedProcedure = t.procedure
   });
 
 export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  const { data: profile } = await ctx.supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", ctx.user.id)
-    .single();
+  const profile = await db.query.profiles.findFirst({
+    where: eq(profiles.id, ctx.user.id),
+    columns: { role: true },
+  });
 
   if (profile?.role !== "admin") {
     throw new TRPCError({ code: "FORBIDDEN" });

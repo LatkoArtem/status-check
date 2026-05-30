@@ -18,6 +18,7 @@ export async function middleware(request: NextRequest) {
     supabaseUrl,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      auth: { storageKey: "sc" },
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -56,5 +57,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  matcher: ["/((?!api|auth/v1|_next|_vercel|.*\\..*).*)"],
 };

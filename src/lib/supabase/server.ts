@@ -11,6 +11,7 @@ export async function createClient() {
     supabaseUrl,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      auth: { storageKey: "sc" },
       cookies: {
         getAll() {
           return cookieStore.getAll();

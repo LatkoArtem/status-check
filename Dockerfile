@@ -15,15 +15,17 @@ COPY . .
 
 # NEXT_PUBLIC_* vars are baked into the JS bundle at build time.
 # Values here match the Docker Compose defaults (localhost ports).
-ARG NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+ARG NEXT_PUBLIC_SUPABASE_URL=http://localhost:3000
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ARG SUPABASE_INTERNAL_URL=http://kong:8000
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV SUPABASE_INTERNAL_URL=$SUPABASE_INTERNAL_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN corepack enable pnpm && pnpm build
+RUN mkdir -p public && corepack enable pnpm && pnpm build
 
 # ── runner: minimal production image ───────────────────────────────────────
 FROM base AS runner

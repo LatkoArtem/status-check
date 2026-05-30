@@ -25,6 +25,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-super-secret-jwt-token-with-at-least-32-characters-long}
     volumes:
       - db-data:/var/lib/postgresql/data
+      - ./docker/init-auth-password.sql:/docker-entrypoint-initdb.d/zz-auth-password.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -103,9 +104,10 @@ services:
       - ./supabase/migrations/20260101000000_initial_schema.sql:/migration.sql:ro
     command: >
       sh -c "
-        psql -c 'CREATE PUBLICATION IF NOT EXISTS supabase_realtime;' &&
+        psql -c \"DO \\\$\\\$ BEGIN IF NOT EXISTS (SELECT FROM pg_publication WHERE pubname='supabase_realtime') THEN CREATE PUBLICATION supabase_realtime; END IF; END \\\$\\\$;\" &&
         psql -f /migration.sql
       "
+
     restart: on-failure
 
   # ── Next.js App ───────────────────────────────────────────────────────────
@@ -113,9 +115,10 @@ services:
     build:
       context: .
       args:
-        NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+        NEXT_PUBLIC_SUPABASE_URL: http://localhost:3000
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRFA0NiK7W9oraprfDjFwSidfp3_3liMkJwgDtgCelw}
         NEXT_PUBLIC_APP_URL: http://localhost:3000
+        SUPABASE_INTERNAL_URL: http://kong:8000
     restart: unless-stopped
     depends_on:
       migrate:

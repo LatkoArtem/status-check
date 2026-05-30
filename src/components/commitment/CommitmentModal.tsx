@@ -171,6 +171,7 @@ export function CommitmentModal({
                 updateStatus.mutate({ id: commitment.id, status })
               }
               isStatusPending={updateStatus.isPending}
+              canChangeStatus={canEdit}
             />
           ) : (
             <div className="flex h-32 items-center justify-center">
@@ -188,6 +189,7 @@ interface ViewModeProps {
   allStatuses: CommitmentStatus[];
   onStatusChange: (status: CommitmentStatus) => void;
   isStatusPending: boolean;
+  canChangeStatus: boolean;
 }
 
 function ViewMode({
@@ -195,6 +197,7 @@ function ViewMode({
   allStatuses,
   onStatusChange,
   isStatusPending,
+  canChangeStatus,
 }: ViewModeProps) {
   const t = useTranslations();
   const locale = useLocale();
@@ -205,35 +208,37 @@ function ViewMode({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <StatusBadge status={commitment.status} />
-        <div className="relative">
-          <button
-            onClick={() => setShowStatusMenu((v) => !v)}
-            disabled={isStatusPending}
-            className="h-7 rounded-md border border-border px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
-          >
-            {t("commitment.changeStatus")}
-          </button>
-          {showStatusMenu && (
-            <div className="absolute right-0 z-10 mt-1 w-44 rounded-md border border-border bg-popover shadow-lg">
-              {allStatuses.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => {
-                    onStatusChange(s);
-                    setShowStatusMenu(false);
-                  }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-xs text-foreground transition-colors hover:bg-accent"
-                >
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: STATUS_COLORS[s] }}
-                  />
-                  {t(`commitment.statuses.${s}`)}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {canChangeStatus && (
+          <div className="relative">
+            <button
+              onClick={() => setShowStatusMenu((v) => !v)}
+              disabled={isStatusPending}
+              className="h-7 rounded-md border border-border px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+            >
+              {t("commitment.changeStatus")}
+            </button>
+            {showStatusMenu && (
+              <div className="absolute right-0 z-10 mt-1 w-44 rounded-md border border-border bg-popover shadow-lg">
+                {allStatuses.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      onStatusChange(s);
+                      setShowStatusMenu(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs text-foreground transition-colors hover:bg-accent"
+                  >
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: STATUS_COLORS[s] }}
+                    />
+                    {t(`commitment.statuses.${s}`)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <Field label={t("commitment.deadline")}>
