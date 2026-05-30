@@ -39,5 +39,9 @@ drizzle/meta/
 # Coverage
 coverage/
 
+# Playwright output
+test-results/
+playwright-report/
+
 # pnpm
 .pnpm-store/
