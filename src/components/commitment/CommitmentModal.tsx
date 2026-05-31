@@ -303,9 +303,16 @@ function ViewMode({
         </Field>
       </div>
 
-      <Field label={t("commitment.author")}>
-        {commitment.authorName ?? "—"}
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={t("commitment.author")}>
+          {commitment.authorName ?? "—"}
+        </Field>
+        <Field label={t("commitment.createdAt")}>
+          {format(new Date(commitment.createdAt), "dd MMM yyyy, HH:mm", {
+            locale: dateFnsLocale,
+          })}
+        </Field>
+      </div>
     </div>
   );
 }

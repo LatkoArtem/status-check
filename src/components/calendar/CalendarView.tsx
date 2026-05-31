@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations, useLocale } from "next-intl";
 import { format } from "date-fns";
@@ -52,6 +52,103 @@ export function CalendarView() {
   // Cache the rendered commitments so we can look up the original deadline
   // (with original time-of-day) when the user drags to a new date.
   const commitmentMapRef = useRef<Map<string, Date>>(new Map());
+
+  // FullCalendar mounts the "+more" popover inside `.fc-view-harness` with
+  // absolute top/left positions tied to the source cell. Near the right or
+  // bottom edge of the viewport it spills off-screen.
+  //
+  // Strategy:
+  //   1. Observe body subtree for popover mount (FullCalendar appends it
+  //      deep inside the calendar tree, not on body directly).
+  //   2. On every reposition cycle, FIRST clamp max-height so the popover
+  //      can never be taller than the viewport (otherwise we'd squeeze it
+  //      against the top edge after a downward overflow correction).
+  //   3. Then nudge left/top so the bounding rect fits inside the viewport
+  //      with a small margin.
+  //   4. Re-run on size changes via ResizeObserver (the popover's content
+  //      loads in async ticks; the first measurement is often stale).
+  useEffect(() => {
+    const MARGIN = 8;
+
+    const reposition = (popover: HTMLElement) => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      // Don't allow popover taller than viewport.
+      popover.style.maxHeight = `${vh - 2 * MARGIN}px`;
+
+      const rect = popover.getBoundingClientRect();
+      let left = parseFloat(popover.style.left || "0");
+      let top = parseFloat(popover.style.top || "0");
+      let newRight = rect.right;
+      let newBottom = rect.bottom;
+      let newLeft = rect.left;
+      let newTop = rect.top;
+
+      if (newRight > vw - MARGIN) {
+        const dx = newRight - (vw - MARGIN);
+        left -= dx;
+        newLeft -= dx;
+      }
+      if (newBottom > vh - MARGIN) {
+        const dy = newBottom - (vh - MARGIN);
+        top -= dy;
+        newTop -= dy;
+      }
+      if (newLeft < MARGIN) left += MARGIN - newLeft;
+      if (newTop < MARGIN) top += MARGIN - newTop;
+
+      popover.style.left = `${left}px`;
+      popover.style.top = `${top}px`;
+    };
+
+    let sizeObserver: ResizeObserver | null = null;
+
+    const onPopoverMounted = (popover: HTMLElement) => {
+      // FullCalendar appends the popover inside `.fc-view-harness`, which has
+      // `overflow: hidden` — so the popover can't render outside the calendar
+      // box no matter how we reposition it. Move it to <body> first; then it
+      // sits in the viewport's coordinate system and our clamp logic works.
+      if (popover.parentElement !== document.body) {
+        const rect = popover.getBoundingClientRect();
+        document.body.appendChild(popover);
+        // Switch to viewport-relative (fixed) so scrolling the calendar
+        // doesn't move the popover.
+        popover.style.position = "fixed";
+        popover.style.left = `${rect.left}px`;
+        popover.style.top = `${rect.top}px`;
+      }
+      requestAnimationFrame(() => reposition(popover));
+      sizeObserver?.disconnect();
+      sizeObserver = new ResizeObserver(() => reposition(popover));
+      sizeObserver.observe(popover);
+      const body = popover.querySelector(".fc-popover-body");
+      if (body) sizeObserver.observe(body);
+    };
+
+    const mutationObserver = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        m.addedNodes.forEach((n) => {
+          if (!(n instanceof HTMLElement)) return;
+          if (n.classList.contains("fc-popover")) {
+            onPopoverMounted(n);
+          }
+        });
+        m.removedNodes.forEach((n) => {
+          if (!(n instanceof HTMLElement)) return;
+          if (n.classList.contains("fc-popover")) {
+            sizeObserver?.disconnect();
+            sizeObserver = null;
+          }
+        });
+      }
+    });
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      mutationObserver.disconnect();
+      sizeObserver?.disconnect();
+    };
+  }, []);
 
   const filters = {
     projectId: projectIds[0],
@@ -109,6 +206,13 @@ export function CalendarView() {
   };
 
   const handleEventClick = useCallback((arg: EventClickArg) => {
+    // FullCalendar keeps the "+more" popover open when you click an event
+    // inside, then internally re-renders it — so simply removing the DOM
+    // node is overwritten on the next tick. Click its close button instead:
+    // FullCalendar treats that as a real close and clears its own state.
+    document
+      .querySelectorAll<HTMLElement>(".fc-popover .fc-popover-close")
+      .forEach((btn) => btn.click());
     setModal({ isOpen: true, mode: "view", commitmentId: arg.event.id });
   }, []);
 

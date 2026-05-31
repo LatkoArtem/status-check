@@ -74,15 +74,24 @@ export default function FullCalendarInner({
         // (which scrolls if there are more than ~5).
         dayMaxEvents={2}
         moreLinkClick="popover"
-        // Week / day timeGrid — allow many events at the same hour to stack
-        // (slotEventOverlap=false → side-by-side; eventMaxStack=null → no cap).
+        // Week / day timeGrid — side-by-side stacking, cap at 4 events per
+        // slot; anything beyond collapses into the same "+more" popover the
+        // month view uses.
         slotEventOverlap={false}
+        eventMaxStack={4}
         nowIndicator
         eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
         slotLabelFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
-        // Time grid — fit more events with less time padding.
-        slotMinTime="06:00:00"
+        // Time grid — show the full 24h so nothing is hidden, but scroll to
+        // a sensible morning anchor on first render so empty hours don't take
+        // up the visible area.
+        slotMinTime="00:00:00"
         slotMaxTime="24:00:00"
+        scrollTime="08:00:00"
+        // Hide the "all-day" row — our model requires a concrete deadline
+        // timestamp, so there is no all-day concept and the row is always
+        // empty (and not droppable). Removing it declutters the week view.
+        allDaySlot={false}
         expandRows
         stickyHeaderDates
       />

@@ -1,41 +1,57 @@
 # Status Check
 
-Вебзастосунок для відстеження дедлайнів і зобов'язань команди. Побудований на базі календаря: замість "виконай задачу" — "проконтролюй виконання задачі іншою людиною".
+Вебзастосунок для відстеження дедлайнів і зобов'язань команди на базі календаря. Замість "виконай задачу" — "проконтролюй виконання задачі іншою людиною".
 
 ## Можливості
 
-- **Календар зобов'язань** — dayGrid / тиждень / список, drag & drop для зміни дедлайну
-- **RBAC** — ролі admin та member з різними правами на редагування
-- **Статуси** — `to_check`, `done`, `expired`, `not_actual`, `ideas_backlog`
-- **Проєкти** — групування зобов'язань за кольоровими проєктами
-- **Сповіщення** — in-app bell (Supabase Realtime + polling fallback) + email через Resend
-- **Автоматичне закриття** — pg_cron кожні 5 хв переводить прострочені зобов'язання в `expired`
-- **i18n** — Українська (default) та English
-- **Теми** — Dark (default) та Light
+### Зобов'язання
+Кожне зобов'язання має поля: **заголовок**, **опис**, **проєкт**, **виконавець**, **перевіряючий**, **дедлайн** (дата + час), **статус**, **автор** і **дата створення**. Автор задається автоматично з поточного юзера; виконавець та перевіряючий — будь-який зареєстрований користувач.
 
-## Технологічний стек
+Створити можна з кнопки "Нове зобов'язання" або кліком на дату/час у календарі. Якщо дедлайн виставлено в минуле — форма попереджає, а сервер відразу позначає його `expired`.
 
-| Категорія | Технологія |
-|-----------|-----------|
-| Framework | Next.js 15 (App Router) |
-| Language | TypeScript (strict) |
-| API | tRPC v11 + TanStack Query |
-| ORM | Drizzle ORM |
-| Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth (email + password) |
-| Realtime | Supabase Realtime |
-| Scheduling | Supabase pg_cron |
-| Email | Resend + React Email |
-| Calendar | FullCalendar v6 |
-| UI | Tailwind CSS v4 |
-| i18n | next-intl |
-| State | Zustand |
-| Theme | next-themes |
-| Deploy | Vercel + Supabase |
+### Статуси
+- `to_check` — очікує перевірки (default)
+- `done` — виконано
+- `expired` — дедлайн минув, не закрили й не перенесли (виставляється автоматично pg_cron'ом кожні 5 хв)
+- `not_actual` — більше не актуально
+- `ideas_backlog` — ідеї / беклог
 
-## Запуск через Docker (рекомендовано)
+Кожен статус має свій колір — і у бейджі, і у календарі (event фарбується кольором статусу).
 
-Не потребує жодних налаштувань — усі значення за замовчуванням вже вбудовані.
+### Календар
+Три види: **місяць** (default), **тиждень** з часовою сіткою, **список** (agenda).
+- Drag & drop переносить дедлайн на іншу дату з підтвердженням
+- Клік на подію → модалка з деталями і кнопками редагування / зміни статусу / видалення
+- На переповнених клітинках з'являється `+ще N` — попап зі скролом, який сам коректно позиціонується біля країв екрана
+- Сьогоднішня клітинка підсвічується
+
+### Фільтри
+На сторінці календаря і списку зобов'язань: за **проєктом**, за **перевіряючим**, за **статусом** (multi-select pills). Фільтри зберігаються в localStorage — переживають перезавантаження сторінки і зміну мови.
+
+### Проєкти
+Admin створює у Settings: назва, опис, колір. Колір використовується як акцент біля назви проєкту у деталях зобов'язання.
+
+### Сповіщення
+- **In-app** — дзвіночок у хедері з лічильником непрочитаних, dropdown з останніми 50 нотифікаціями
+- **Email** через Resend з React-Email шаблонами
+- Тригери: тебе призначили виконавцем/перевіряючим, статус твого зобов'язання змінили, до дедлайну менше 24 годин (pg_cron, щогодини)
+- Realtime через Supabase (з polling fallback кожні 30 с локально)
+
+### Решта
+- Ролі **admin** і **member** з різними правами на редагування
+- i18n — українська (default) та англійська, перемикач у хедері
+- Темна (default) і світла тема, перемикач у хедері
+- Mobile responsive — sidebar згортається у hamburger menu
+- Skeleton loaders, toast-сповіщення на всі мутації, empty states з іконками
+- Підтверджуючі діалоги перед видаленням і drag & drop
+
+## Стек
+
+Next.js 15 · TypeScript · tRPC v11 · Drizzle ORM · Supabase (Postgres + Auth + Realtime + pg_cron) · FullCalendar · Tailwind v4 · next-intl · Zustand · Resend + React Email
+
+## Запуск
+
+Потрібен Docker Desktop. Усі змінні мають дефолти — нічого налаштовувати не треба.
 
 ```bash
 git clone <repo-url>
@@ -43,175 +59,41 @@ cd status-check
 docker compose up --build
 ```
 
-Додаток доступний на [http://localhost:3000](http://localhost:3000)
+Готово: [http://localhost:3000](http://localhost:3000)
 
-> Перший запуск займе ~3–5 хв (завантаження образів + білд Next.js).
-> Подальші запуски (`docker compose up`) стартують за секунди.
-
-### Seed-дані (опціонально)
-
-Зареєструйся на `/register`, потім в окремому терміналі:
+Перший білд — ~3–5 хв (завантаження образів). Подальші `docker compose up` стартують за секунди.
 
 ```bash
-DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres pnpm db:seed
+docker compose down       # зупинити
+docker compose down -v    # зупинити + повністю очистити БД
 ```
 
-### Зупинка
+## Реєстрація і ролі
+
+`/register` завжди створює користувача з роллю `member`. Це навмисно — публічна реєстрація не повинна давати admin-прав.
+
+### Зробити першого адміна
+
+Зареєструйся через `/register`, потім:
 
 ```bash
-docker compose down          # зупинити, зберегти дані
-docker compose down -v       # зупинити + видалити дані БД
+docker compose exec db psql -U postgres -c \
+  "UPDATE public.profiles SET role = 'admin' WHERE email = 'твій@email.com';"
 ```
 
----
+Вийди з акаунту і зайди знову — права підтягнуться.
 
-## Локальний запуск (без Docker)
+### Наступні адміни
 
-### 1. Встановити залежності
+Існуючий admin у **Settings → Users** змінює роль будь-якого користувача через dropdown. SQL більше не потрібен.
 
-```bash
-pnpm install
-```
+### Що може хто
 
-### 2. Налаштувати змінні середовища
+| Дія | member | admin |
+|---|:---:|:---:|
+| Бачити календар і всі зобов'язання | ✅ | ✅ |
+| Створювати зобов'язання | ✅ | ✅ |
+| Редагувати / видаляти **свої** зобов'язання | ✅ | ✅ |
+| Редагувати / видаляти **чужі** зобов'язання | ❌ | ✅ |
+| Керувати проєктами і ролями | ❌ | ✅ |
 
-```bash
-cp .env.example .env.local
-```
-
-Заповнити `.env.local`:
-
-```env
-# Supabase (локально — після `supabase start`)
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key з виводу supabase start>
-SUPABASE_SERVICE_ROLE_KEY=<service_role key>
-DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
-
-# Email (опціонально)
-RESEND_API_KEY=<ваш Resend API key>
-RESEND_FROM_EMAIL=onboarding@resend.dev
-
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-### 3. Запустити локальний Supabase
-
-```bash
-# Потрібен Docker Desktop
-supabase start
-```
-
-> **Примітка (Docker Desktop 4.75.0 + WSL2):** якщо `supabase start` падає з exit 135 (GoTrue SIGBUS) — запустіть:
-> ```powershell
-> .\supabase\start.ps1
-> ```
-
-### 4. Застосувати міграції
-
-```bash
-supabase migration up
-```
-
-### 5. Запустити сервер розробки
-
-```bash
-pnpm dev
-```
-
-Додаток доступний на [http://localhost:3000](http://localhost:3000)
-
-### 6. Seed-дані (опціонально)
-
-Зареєструватись хоча б одним користувачем на `/register`, потім:
-
-```bash
-pnpm db:seed
-```
-
-Це створить:
-- Першого зареєстрованого користувача зробить **admin**
-- 3 проєкти (Продуктові оновлення, Технічний борг, Маркетинг)
-- 8 зобов'язань з різними статусами та дедлайнами
-
-## Деплой на Vercel + Supabase
-
-### Supabase (production)
-
-1. Створити проєкт на [supabase.com](https://supabase.com)
-2. Застосувати міграцію: **SQL Editor** → вставити вміст `supabase/migrations/20260101000000_initial_schema.sql`
-3. Скопіювати **Project URL**, **anon key**, **service_role key** з Settings → API
-
-### Vercel
-
-1. Підключити GitHub репозиторій на [vercel.com](https://vercel.com)
-2. У налаштуваннях проєкту додати Environment Variables:
-
-```
-NEXT_PUBLIC_SUPABASE_URL      = <Supabase Project URL>
-NEXT_PUBLIC_SUPABASE_ANON_KEY = <anon key>
-SUPABASE_SERVICE_ROLE_KEY     = <service_role key>
-DATABASE_URL                  = <Supabase connection string>
-RESEND_API_KEY                = <Resend API key>
-RESEND_FROM_EMAIL             = <verified sender email>
-NEXT_PUBLIC_APP_URL           = <Vercel deployment URL>
-```
-
-3. Деплой відбувається автоматично при кожному push у `main`
-
-### pg_cron для deadline emails (production)
-
-У Supabase SQL Editor виконати:
-
-```sql
--- Встановити URL застосунку
-ALTER DATABASE postgres SET app.edge_function_url = 'https://your-app.vercel.app/api';
-ALTER DATABASE postgres SET app.service_key = '<SUPABASE_SERVICE_ROLE_KEY>';
-
--- Активувати cron job для deadline emails
-SELECT cron.schedule(
-  'deadline-notifications',
-  '0 * * * *',
-  $$ SELECT net.http_post(
-    url := current_setting('app.edge_function_url') || '/send-deadline-emails',
-    headers := jsonb_build_object('Authorization', 'Bearer ' || current_setting('app.service_key')),
-    body := '{}'::jsonb
-  ); $$
-);
-```
-
-## Структура проєкту
-
-```
-src/
-├── app/[locale]/
-│   ├── (auth)/          — login, register
-│   ├── (dashboard)/     — calendar, commitments, settings
-│   └── api/             — tRPC handler, send-deadline-emails
-├── components/
-│   ├── calendar/        — CalendarView, CalendarFilters
-│   ├── commitment/      — CommitmentModal, CommitmentForm, StatusBadge
-│   ├── layout/          — Sidebar, Header, ThemeToggle, LanguageSwitcher
-│   ├── notifications/   — NotificationBell
-│   └── ui/              — Toaster
-├── emails/              — React Email templates
-├── hooks/               — useRealtimeNotifications
-├── lib/                 — supabase clients, email helper
-├── messages/            — uk.json, en.json
-├── server/
-│   ├── api/routers/     — commitment, project, user, notification
-│   └── db/              — Drizzle schema, seed
-└── store/               — filters, toast, ui (Zustand)
-```
-
-## Команди
-
-```bash
-pnpm dev          # Сервер розробки
-pnpm build        # Production build
-pnpm db:push      # Синхронізувати схему (dev)
-pnpm db:generate  # Згенерувати міграцію
-pnpm db:migrate   # Застосувати міграції
-pnpm db:seed      # Seed-дані для демо
-pnpm db:studio    # Drizzle Studio (UI для БД)
-```

@@ -53,6 +53,9 @@ export function CommitmentForm({
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Compared against `new Date()` on every render — fine, the form is short-lived.
+  const isDeadlineInPast = deadline ? new Date(deadline) < new Date() : false;
+
   const { data: projects } = api.project.list.useQuery();
   const { data: users } = api.user.listAll.useQuery();
   const toast = useToast();
@@ -195,14 +198,29 @@ export function CommitmentForm({
           value={deadline}
           onChange={(e) => setDeadline(e.target.value)}
           aria-invalid={!!errors.deadline}
-          aria-describedby={errors.deadline ? "commitment-deadline-error" : undefined}
+          aria-describedby={
+            errors.deadline
+              ? "commitment-deadline-error"
+              : isDeadlineInPast
+                ? "commitment-deadline-warning"
+                : undefined
+          }
           className={cn(
             "h-9 rounded-md border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring",
             errors.deadline ? "border-destructive" : "border-border",
           )}
         />
-        {errors.deadline && (
+        {errors.deadline ? (
           <p id="commitment-deadline-error" className="text-xs text-destructive">{errors.deadline}</p>
+        ) : (
+          !isEdit && isDeadlineInPast && (
+            <p
+              id="commitment-deadline-warning"
+              className="text-xs text-amber-600 dark:text-amber-400"
+            >
+              {t("commitment.pastDeadlineWarning")}
+            </p>
+          )
         )}
       </div>
 

@@ -87,6 +87,7 @@
     "noChecker": "Unassigned",
     "titleRequired": "Title is required",
     "deadlineRequired": "Deadline is required",
+    "pastDeadlineWarning": "Deadline is in the past — commitment will be marked as expired",
     "selectProject": "Select project",
     "selectExecutor": "Select executor",
     "selectChecker": "Select checker",
@@ -138,6 +139,7 @@
       "member": "Member"
     },
     "changeRole": "Change role",
+    "roleChanged": "Role changed",
     "you": "You",
     "name": "Name",
     "email": "Email",

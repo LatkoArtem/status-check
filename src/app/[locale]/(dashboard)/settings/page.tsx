@@ -108,7 +108,7 @@ function UsersSection({ currentUserId }: { currentUserId: string }) {
 
   const updateRole = api.user.updateRole.useMutation({
     onSuccess: () => {
-      toast.success(t("changeRole"));
+      toast.success(t("roleChanged"));
       void refetch();
     },
     onError: () => toast.error(tCommon("generic")),
@@ -219,6 +219,10 @@ const DEFAULT_FORM: ProjectFormState = {
   description: "",
   color: "#3B82F6",
 };
+
+// Mirror the server-side zod schema in project.ts.
+const PROJECT_NAME_MAX = 100;
+const PROJECT_DESCRIPTION_MAX = 500;
 
 function ProjectsSection() {
   const t = useTranslations();
@@ -405,9 +409,24 @@ function ProjectsSection() {
                   id="project-name"
                   type="text"
                   value={modal.form.name}
-                  onChange={(e) => updateForm({ name: e.target.value })}
+                  onChange={(e) =>
+                    updateForm({ name: e.target.value.slice(0, PROJECT_NAME_MAX) })
+                  }
+                  maxLength={PROJECT_NAME_MAX}
+                  aria-describedby="project-name-counter"
                   className="h-9 rounded-md border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 />
+                <div className="flex justify-end">
+                  <span
+                    id="project-name-counter"
+                    className={cn(
+                      "text-[10px] tabular-nums text-muted-foreground",
+                      modal.form.name.length === PROJECT_NAME_MAX && "text-destructive",
+                    )}
+                  >
+                    {modal.form.name.length}/{PROJECT_NAME_MAX}
+                  </span>
+                </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -417,10 +436,28 @@ function ProjectsSection() {
                 <textarea
                   id="project-description"
                   value={modal.form.description}
-                  onChange={(e) => updateForm({ description: e.target.value })}
+                  onChange={(e) =>
+                    updateForm({
+                      description: e.target.value.slice(0, PROJECT_DESCRIPTION_MAX),
+                    })
+                  }
+                  maxLength={PROJECT_DESCRIPTION_MAX}
                   rows={2}
+                  aria-describedby="project-description-counter"
                   className="resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 />
+                <div className="flex justify-end">
+                  <span
+                    id="project-description-counter"
+                    className={cn(
+                      "text-[10px] tabular-nums text-muted-foreground",
+                      modal.form.description.length === PROJECT_DESCRIPTION_MAX &&
+                        "text-destructive",
+                    )}
+                  >
+                    {modal.form.description.length}/{PROJECT_DESCRIPTION_MAX}
+                  </span>
+                </div>
               </div>
 
               <div className="flex flex-col gap-1.5">

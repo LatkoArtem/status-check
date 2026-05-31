@@ -54,3 +54,15 @@ tests/lighthouse/reports/
 
 # pnpm
 .pnpm-store/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo

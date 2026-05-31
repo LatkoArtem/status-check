@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { alias } from "drizzle-orm/pg-core";
-import { and, asc, desc, eq, gte, inArray, lte, or } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte } from "drizzle-orm";
 import { render } from "@react-email/render";
 import { z } from "zod";
 import { db } from "~/server/db";
@@ -42,12 +42,7 @@ export const commitmentRouter = createTRPCRouter({
         conditions.push(eq(commitments.projectId, input.projectId));
       }
       if (input?.checkerId) {
-        conditions.push(
-          or(
-            eq(commitments.responsibleCheckerId, input.checkerId),
-            eq(commitments.responsibleExecutorId, input.checkerId),
-          ),
-        );
+        conditions.push(eq(commitments.responsibleCheckerId, input.checkerId));
       }
       if (input?.status?.length) {
         conditions.push(inArray(commitments.status, input.status));
@@ -140,10 +135,15 @@ export const commitmentRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // If the deadline is already in the past on create, mark it as
+      // expired up-front instead of waiting for the pg_cron sweep.
+      const initialStatus = input.deadline < new Date() ? "expired" : "to_check";
+
       const [commitment] = await db
         .insert(commitments)
         .values({
           ...input,
+          status: initialStatus,
           authorId: ctx.user.id,
           updatedBy: ctx.user.id,
         })

@@ -5,7 +5,6 @@ import { LogOut, Menu } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { NotificationBell } from "~/components/notifications/NotificationBell";
-import { createClient } from "~/lib/supabase/client";
 import { api } from "~/trpc/react";
 import { useUiStore } from "~/store/ui";
 
@@ -14,16 +13,6 @@ export function Header() {
   const t = useTranslations();
   const { data: user } = api.user.me.useQuery();
   const { toggleSidebar } = useUiStore();
-
-  const handleSignOut = async () => {
-    // Use the shared client so signOut clears the cookie under the same
-    // storageKey ("sc") that the middleware reads.
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    // Hard navigation so the middleware re-runs on a server request and the
-    // cleared cookies are seen — soft router.push() can keep the session alive.
-    window.location.href = `/${locale}/login`;
-  };
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card px-4">
@@ -44,17 +33,33 @@ export function Header() {
         <NotificationBell userId={user?.id} />
         <div className="mx-2 h-4 w-px bg-border" />
         {user && (
-          <span className="hidden max-w-[120px] truncate text-sm text-muted-foreground sm:block">
-            {user.name}
-          </span>
+          <div className="hidden max-w-[140px] flex-col items-end leading-tight sm:flex">
+            <span className="truncate text-sm text-muted-foreground">
+              {user.name}
+            </span>
+            {user.role === "admin" && (
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+                {t("settings.role.admin")}
+              </span>
+            )}
+          </div>
         )}
-        <button
-          onClick={handleSignOut}
-          aria-label={t("auth.logout")}
-          className="ml-1 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
+        {/*
+          Server-side signout: posts to /api/signout which clears cookies via
+          @supabase/ssr and returns a 303 redirect to /login. Doing it on the
+          server is the only reliable way — client-side signOut() can leave
+          stale auth cookies that the middleware then accepts as valid,
+          causing /login to bounce right back to /calendar.
+        */}
+        <form action={`/api/signout?locale=${locale}`} method="post">
+          <button
+            type="submit"
+            aria-label={t("auth.logout")}
+            className="ml-1 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </form>
       </div>
     </header>
   );
