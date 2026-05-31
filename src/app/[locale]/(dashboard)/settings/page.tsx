@@ -15,6 +15,7 @@ import {
 import { api } from "~/trpc/react";
 import { type UserRole } from "~/server/db/schema";
 import { useToast } from "~/store/toast";
+import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import { cn } from "~/lib/utils";
 
 type Tab = "users" | "projects";
@@ -122,9 +123,9 @@ function UsersSection({ currentUserId }: { currentUserId: string }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border bg-muted/40">
-            <Th>Name</Th>
-            <Th>Email</Th>
-            <Th>Role</Th>
+            <Th>{t("name")}</Th>
+            <Th>{t("email")}</Th>
+            <Th>{t("userRole")}</Th>
           </tr>
         </thead>
         <tbody>
@@ -136,8 +137,8 @@ function UsersSection({ currentUserId }: { currentUserId: string }) {
               <td className="px-4 py-3 font-medium text-foreground">
                 {u.name}
                 {u.id === currentUserId && (
-                  <span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
-                    You
+                  <span className="ml-2 rounded-full bg-primary px-1.5 py-0.5 text-xs font-medium text-primary-foreground">
+                    {t("you")}
                   </span>
                 )}
               </td>
@@ -170,8 +171,8 @@ function RoleBadge({ role }: { role: UserRole }) {
       className={cn(
         "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
         role === "admin"
-          ? "bg-primary/10 text-primary"
-          : "bg-muted text-muted-foreground",
+          ? "bg-primary text-primary-foreground"
+          : "bg-muted text-foreground",
       )}
     >
       {t(role)}
@@ -194,6 +195,7 @@ function RoleSelect({
       value={value}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value as UserRole)}
+      aria-label={t("changeRole")}
       className="h-7 rounded-md border border-border bg-card px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
     >
       <option value="member">{t("role.member")}</option>
@@ -226,6 +228,9 @@ function ProjectsSection() {
     | { isOpen: false }
     | { isOpen: true; editId?: string; form: ProjectFormState }
   >({ isOpen: false });
+  const [deleteTarget, setDeleteTarget] = useState<
+    { id: string; name: string } | null
+  >(null);
 
   const createProject = api.project.create.useMutation({
     onSuccess: () => { toast.success(t("project.created")); void refetch(); closeModal(); },
@@ -279,10 +284,15 @@ function ProjectsSection() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm(t("project.deleted") + "?")) {
-      deleteProject.mutate({ id });
-    }
+  const requestDelete = (p: { id: string; name: string }) =>
+    setDeleteTarget({ id: p.id, name: p.name });
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteProject.mutate(
+      { id: deleteTarget.id },
+      { onSettled: () => setDeleteTarget(null) },
+    );
   };
 
   const updateForm = (patch: Partial<ProjectFormState>) => {
@@ -340,13 +350,15 @@ function ProjectsSection() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => openEdit(p)}
+                  aria-label={`${t("common.edit")} ${p.name}`}
                   className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  onClick={() => handleDelete(p.id)}
+                  onClick={() => requestDelete(p)}
                   disabled={deleteProject.isPending}
+                  aria-label={`${t("common.delete")} ${p.name}`}
                   className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -364,13 +376,19 @@ function ProjectsSection() {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={closeModal}
           />
-          <div className="relative z-10 w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-2xl">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="project-modal-title"
+            className="relative z-10 w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-2xl"
+          >
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-foreground">
+              <h3 id="project-modal-title" className="text-sm font-semibold text-foreground">
                 {modal.editId ? t("project.editProject") : t("project.newProject")}
               </h3>
               <button
                 onClick={closeModal}
+                aria-label={t("common.close")}
                 className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent"
               >
                 <X className="h-4 w-4" />
@@ -379,11 +397,12 @@ function ProjectsSection() {
 
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">
+                <label htmlFor="project-name" className="text-xs font-medium text-foreground">
                   {t("project.name")}
                   <span className="ml-0.5 text-destructive">*</span>
                 </label>
                 <input
+                  id="project-name"
                   type="text"
                   value={modal.form.name}
                   onChange={(e) => updateForm({ name: e.target.value })}
@@ -392,10 +411,11 @@ function ProjectsSection() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">
+                <label htmlFor="project-description" className="text-xs font-medium text-foreground">
                   {t("project.description")}
                 </label>
                 <textarea
+                  id="project-description"
                   value={modal.form.description}
                   onChange={(e) => updateForm({ description: e.target.value })}
                   rows={2}
@@ -404,11 +424,12 @@ function ProjectsSection() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">
+                <label htmlFor="project-color" className="text-xs font-medium text-foreground">
                   {t("project.color")}
                 </label>
                 <div className="flex items-center gap-2">
                   <input
+                    id="project-color"
                     type="color"
                     value={modal.form.color}
                     onChange={(e) => updateForm({ color: e.target.value })}
@@ -446,6 +467,18 @@ function ProjectsSection() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        destructive
+        title={t("project.deleteConfirm")}
+        description={deleteTarget?.name}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        isPending={deleteProject.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

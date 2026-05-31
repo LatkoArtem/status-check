@@ -35,13 +35,19 @@
       "passwordsDoNotMatch": "Passwords do not match",
       "nameRequired": "Name is required",
       "loginFailed": "Invalid email or password",
-      "registerFailed": "Registration failed. Please try again."
+      "registerFailed": "Registration failed. Please try again.",
+      "emailAlreadyExists": "An account with this email already exists. Try signing in."
     }
   },
   "nav": {
     "calendar": "Calendar",
     "commitments": "Commitments",
     "settings": "Settings"
+  },
+  "layout": {
+    "openMenu": "Open menu",
+    "toggleTheme": "Toggle theme",
+    "switchLanguage": "Switch language"
   },
   "calendar": {
     "title": "Calendar",
@@ -50,7 +56,8 @@
     "today": "Today",
     "month": "Month",
     "week": "Week",
-    "list": "List"
+    "list": "List",
+    "dropConfirmTitle": "Move deadline?"
   },
   "commitment": {
     "title": "Title",
@@ -96,6 +103,7 @@
     "created": "Project created",
     "updated": "Project updated",
     "deleted": "Project deleted",
+    "deleteConfirm": "Delete this project? This action cannot be undone.",
     "newProject": "New Project",
     "editProject": "Edit Project",
     "noProjects": "No projects"
@@ -129,7 +137,11 @@
       "admin": "Administrator",
       "member": "Member"
     },
-    "changeRole": "Change role"
+    "changeRole": "Change role",
+    "you": "You",
+    "name": "Name",
+    "email": "Email",
+    "userRole": "Role"
   },
   "errors": {
     "generic": "Something went wrong",

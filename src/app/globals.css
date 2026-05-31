@@ -27,7 +27,6 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Кольори статусів */
   --color-status-to-check: #3b82f6;
   --color-status-expired: #ef4444;
   --color-status-done: #22c55e;
@@ -43,15 +42,15 @@
   --popover: #ffffff;
   --popover-foreground: #09090b;
   --primary: #2563eb;
-  --primary-foreground: #fafafa;
+  --primary-foreground: #ffffff;
   --secondary: #f4f4f5;
   --secondary-foreground: #18181b;
   --muted: #f4f4f5;
-  --muted-foreground: #71717a;
+  --muted-foreground: #52525b;
   --accent: #f4f4f5;
   --accent-foreground: #18181b;
   --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
+  --destructive-foreground: #ffffff;
   --border: #e4e4e7;
   --input: #e4e4e7;
   --ring: #2563eb;
@@ -65,8 +64,8 @@
   --card-foreground: #fafafa;
   --popover: #111111;
   --popover-foreground: #fafafa;
-  --primary: #3b82f6;
-  --primary-foreground: #fafafa;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
   --secondary: #1f1f1f;
   --secondary-foreground: #fafafa;
   --muted: #1f1f1f;
@@ -74,10 +73,10 @@
   --accent: #1f1f1f;
   --accent-foreground: #fafafa;
   --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
+  --destructive-foreground: #ffffff;
   --border: #1f1f1f;
   --input: #1f1f1f;
-  --ring: #3b82f6;
+  --ring: #2563eb;
 }
 
 * {
@@ -93,14 +92,67 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Transition на всіх інтерактивних елементах */
+/* ── Interactive defaults ─────────────────────────────────────────────────
+ *
+ * Tailwind v4 dropped `cursor: pointer` from the default reset, so non-link,
+ * non-anchor interactive elements would otherwise show the default arrow.
+ * Restore it for buttons / role=button / anchors with hrefs. Disabled buttons
+ * keep their not-allowed cursor.
+ */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+summary,
+label[for],
+select:not(:disabled),
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 button,
 a,
 [role="button"] {
-  transition: all 200ms ease;
+  transition: color 200ms ease, background-color 200ms ease,
+    border-color 200ms ease, opacity 200ms ease;
 }
 
-/* Toast entrance animation */
+/* ── Native <select> chevron ──────────────────────────────────────────────
+ *
+ * Replace the OS-default arrow with a unified chevron that follows the theme.
+ * Selects opt-in via the `select-themed` utility (kept opt-in so any future
+ * custom dropdowns aren't styled twice).
+ */
+.select-themed,
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 0.75rem;
+  padding-right: 1.75rem;
+}
+
+.dark .select-themed,
+.dark select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+}
+
+/* Color input box should look like a pill, not a giant box */
+input[type="color"] {
+  cursor: pointer;
+}
+
+/* ── Toast animation ──────────────────────────────────────────────────────*/
 @keyframes toast-in {
   from {
     opacity: 0;
@@ -111,7 +163,262 @@ a,
     transform: translateY(0) scale(1);
   }
 }
-
 .animate-toast {
   animation: toast-in 180ms ease-out;
+}
+
+/* ── FullCalendar theming ─────────────────────────────────────────────────
+ *
+ * FullCalendar ships its own CSS that doesn't know about our theme tokens.
+ * These rules re-bind its surfaces, borders, text colors and interactive
+ * elements (header buttons, "more" popover, list view, time grid) to the
+ * design tokens so it looks correct in both light and dark mode.
+ *
+ * Scoped under `.fc` so we don't accidentally style unrelated elements.
+ */
+.fc {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: var(--card);
+  --fc-neutral-bg-color: var(--muted);
+  --fc-neutral-text-color: var(--muted-foreground);
+  --fc-today-bg-color: color-mix(in srgb, var(--primary) 8%, transparent);
+  --fc-now-indicator-color: var(--destructive);
+  --fc-event-bg-color: var(--primary);
+  --fc-event-border-color: var(--primary);
+  --fc-event-text-color: var(--primary-foreground);
+  --fc-button-bg-color: var(--card);
+  --fc-button-border-color: var(--border);
+  --fc-button-text-color: var(--foreground);
+  --fc-button-hover-bg-color: var(--accent);
+  --fc-button-hover-border-color: var(--border);
+  --fc-button-active-bg-color: var(--primary);
+  --fc-button-active-border-color: var(--primary);
+  color: var(--foreground);
+}
+
+/* Header toolbar buttons (prev / next / today / month / week / list) */
+.fc .fc-button {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  box-shadow: none;
+  text-transform: none;
+}
+.fc .fc-button:hover:not(:disabled) {
+  background-color: var(--accent);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+.fc .fc-button:focus,
+.fc .fc-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+  outline: none;
+}
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+}
+.fc .fc-button:disabled {
+  opacity: 0.5;
+}
+
+/* Toolbar title */
+.fc .fc-toolbar-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* Grid surfaces */
+.fc .fc-scrollgrid,
+.fc .fc-scrollgrid-section > * {
+  border-color: var(--border);
+}
+.fc .fc-col-header-cell,
+.fc .fc-daygrid-day,
+.fc .fc-timegrid-slot,
+.fc .fc-list-day,
+.fc .fc-list-day-cushion {
+  background-color: transparent;
+}
+.fc .fc-col-header-cell-cushion {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.5rem 0.25rem;
+}
+.fc .fc-daygrid-day-number {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.375rem;
+}
+.fc .fc-day-today {
+  background-color: var(--fc-today-bg-color) !important;
+}
+
+/* Time grid */
+.fc .fc-timegrid-slot-label-cushion,
+.fc .fc-timegrid-axis-cushion {
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+}
+.fc .fc-timegrid-event {
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+}
+
+/* Events */
+.fc .fc-event {
+  cursor: pointer;
+  border-radius: 0.25rem;
+  padding: 0 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fc .fc-event:hover {
+  filter: brightness(1.1);
+}
+.fc .fc-event .fc-event-main {
+  color: inherit;
+}
+
+/* "+more" link */
+.fc .fc-daygrid-more-link {
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0 0.25rem;
+}
+.fc .fc-daygrid-more-link:hover {
+  color: var(--foreground);
+  background-color: var(--accent);
+  border-radius: 0.25rem;
+}
+
+/* "more" popover (the floating list when you click +n more)
+ *
+ * The popover itself doesn't scroll — the BODY does. That way the sticky
+ * header (date + close button) stays visible while the user scrolls events.
+ * `--fc-popover-body-max` is sized so ~5 compact event rows fit before the
+ * scrollbar kicks in (5 × ~28px ≈ 140px), and the whole popover is capped to
+ * stay inside the viewport.
+ */
+.fc .fc-popover {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  max-width: min(22rem, calc(100vw - 1rem));
+  max-height: min(22rem, calc(100vh - 4rem));
+  overflow: hidden;
+}
+.fc .fc-popover-header {
+  background-color: var(--muted);
+  color: var(--foreground);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+.fc .fc-popover-close {
+  color: var(--muted-foreground);
+  opacity: 1;
+  cursor: pointer;
+}
+.fc .fc-popover-close:hover {
+  color: var(--foreground);
+}
+.fc .fc-popover-body {
+  padding: 0.375rem 0.5rem;
+  overflow-y: auto;
+  /* ~5 compact event rows; anything beyond that scrolls. */
+  max-height: 12rem;
+}
+/* Subtle scrollbar inside the popover so it's visible at all times */
+.fc .fc-popover-body::-webkit-scrollbar {
+  width: 8px;
+}
+.fc .fc-popover-body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+  border-radius: 4px;
+}
+.fc .fc-popover-body::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--muted-foreground) 60%, transparent);
+}
+.fc .fc-popover .fc-event {
+  margin: 0.125rem 0;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+/* List view (agenda) */
+.fc .fc-list {
+  border-color: var(--border);
+  background-color: var(--card);
+  color: var(--foreground);
+}
+.fc .fc-list-empty {
+  background-color: var(--card);
+  color: var(--muted-foreground);
+}
+.fc .fc-list-day-cushion {
+  background-color: var(--muted);
+  color: var(--foreground);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 0.5rem 0.75rem;
+}
+.fc .fc-list-day-cushion a {
+  color: var(--foreground);
+}
+.fc .fc-list-event {
+  cursor: pointer;
+  background-color: transparent !important;
+  color: var(--foreground);
+}
+.fc .fc-list-event td {
+  border-color: var(--border);
+  padding: 0.5rem 0.75rem;
+}
+.fc .fc-list-event:hover td {
+  background-color: var(--accent);
+}
+.fc .fc-list-event-time,
+.fc .fc-list-event-title {
+  color: var(--foreground);
+  font-size: 0.8125rem;
+}
+.fc .fc-list-event-dot {
+  border-color: currentColor;
+}
+
+/* Tighten the day-grid event packing so titles aren't clipped to one
+ * useless character. We rely on `dayMaxEvents` to collapse overflow. */
+.fc-daygrid-day-events {
+  min-height: 1.5rem;
+}
+.fc-daygrid-event {
+  margin-bottom: 1px;
+}
+
+/* When the calendar is empty, FullCalendar still renders fully; the overlay
+ * from the React layer should sit OUTSIDE the body of the grid (handled in
+ * CalendarView.tsx), but ensure it doesn't intercept clicks. */
+.fc-empty-overlay {
+  pointer-events: none;
 }

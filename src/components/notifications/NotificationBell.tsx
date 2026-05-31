@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Bell, Clock, RefreshCw, UserPlus, CheckCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { uk } from "date-fns/locale";
+import { uk, enUS } from "date-fns/locale";
 import { api } from "~/trpc/react";
 import { useRealtimeNotifications } from "~/hooks/use-realtime-notifications";
 import { cn } from "~/lib/utils";
@@ -17,6 +17,8 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 
 export function NotificationBell({ userId }: { userId?: string }) {
   const t = useTranslations("notifications");
+  const locale = useLocale();
+  const dateLocale = locale === "uk" ? uk : enUS;
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -28,9 +30,15 @@ export function NotificationBell({ userId }: { userId?: string }) {
       refetchInterval: 30_000,
     });
 
+  // Fetch the list eagerly so opening the dropdown doesn't go through a
+  // visible "loading → data" flicker. We also keep the previous data on
+  // background refetches (`placeholderData`) so the list never collapses
+  // back to a skeleton.
   const { data: notifs, refetch: refetchList } =
     api.notification.list.useQuery(undefined, {
-      enabled: open,
+      refetchInterval: 60_000,
+      placeholderData: (prev) => prev,
+      staleTime: 30_000,
     });
 
   const markRead = api.notification.markRead.useMutation({
@@ -134,7 +142,7 @@ export function NotificationBell({ userId }: { userId?: string }) {
                     <p className="mt-0.5 text-[11px] text-muted-foreground/60">
                       {formatDistanceToNow(new Date(n.createdAt), {
                         addSuffix: true,
-                        locale: uk,
+                        locale: dateLocale,
                       })}
                     </p>
                   </div>

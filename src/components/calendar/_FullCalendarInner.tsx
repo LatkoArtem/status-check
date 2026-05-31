@@ -5,8 +5,14 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
+import ukLocale from "@fullcalendar/core/locales/uk";
+import enGbLocale from "@fullcalendar/core/locales/en-gb";
 import { useLocale, useTranslations } from "next-intl";
-import type { EventClickArg, EventDropArg, EventInput } from "@fullcalendar/core";
+import type {
+  EventClickArg,
+  EventDropArg,
+  EventInput,
+} from "@fullcalendar/core";
 import type { DateClickArg } from "@fullcalendar/interaction";
 
 interface FullCalendarInnerProps {
@@ -24,13 +30,26 @@ export default function FullCalendarInner({
 }: FullCalendarInnerProps) {
   const locale = useLocale();
   const t = useTranslations("calendar");
+  // Passing the FULL locale OBJECT (not just the code string) is what makes
+  // FullCalendar localize "+ще N", "Увесь день", "Немає подій для
+  // відображення", "Тиж", weekday names, etc.
+  const fcLocale = locale === "uk" ? ukLocale : enGbLocale;
+
+  // Give every event a 30-minute visible duration so they tile nicely in the
+  // week view instead of collapsing to invisible-thin lines.
+  const eventsWithDuration: EventInput[] = events.map((e) => {
+    const start = e.start instanceof Date ? e.start : new Date(e.start as string);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    return { ...e, end };
+  });
 
   return (
-    <div className="h-full p-2 [&_.fc]:h-full [&_.fc-toolbar-title]:text-sm [&_.fc-toolbar-title]:font-semibold [&_.fc-button]:rounded [&_.fc-button]:border [&_.fc-button]:border-border [&_.fc-button]:bg-card [&_.fc-button]:text-foreground [&_.fc-button:hover]:bg-accent [&_.fc-button-active]:!bg-accent [&_.fc-button-primary]:!shadow-none [&_.fc-col-header-cell]:text-xs [&_.fc-col-header-cell]:font-medium [&_.fc-col-header-cell]:text-muted-foreground [&_.fc-daygrid-day-number]:text-xs [&_.fc-daygrid-day-number]:text-muted-foreground [&_.fc-event]:cursor-pointer [&_.fc-event]:rounded [&_.fc-event]:border-none [&_.fc-event]:px-1 [&_.fc-event]:text-xs [&_.fc-list-event]:cursor-pointer [&_.fc-theme-standard_.fc-scrollgrid]:border-border [&_td]:border-border [&_th]:border-border">
+    <div className="h-full p-2 [&_.fc]:h-full">
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
         initialView="dayGridMonth"
-        locale={locale}
+        locale={fcLocale}
+        firstDay={1}
         headerToolbar={{
           left: "prev,next today",
           center: "title",
@@ -42,15 +61,30 @@ export default function FullCalendarInner({
           week: t("week"),
           list: t("list"),
         }}
-        events={events}
+        events={eventsWithDuration}
         editable
+        eventStartEditable
+        eventDurationEditable={false}
         selectable
         eventClick={onEventClick}
         dateClick={onDateClick}
         eventDrop={onEventDrop}
         height="100%"
-        dayMaxEvents={3}
+        // Month view — keep 2 inline; the rest collapse into the +more popover
+        // (which scrolls if there are more than ~5).
+        dayMaxEvents={2}
+        moreLinkClick="popover"
+        // Week / day timeGrid — allow many events at the same hour to stack
+        // (slotEventOverlap=false → side-by-side; eventMaxStack=null → no cap).
+        slotEventOverlap={false}
         nowIndicator
+        eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
+        slotLabelFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
+        // Time grid — fit more events with less time padding.
+        slotMinTime="06:00:00"
+        slotMaxTime="24:00:00"
+        expandRows
+        stickyHeaderDates
       />
     </div>
   );

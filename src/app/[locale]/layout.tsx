@@ -10,6 +10,19 @@ import "~/app/globals.css";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  await params;
+  // Pages can override `title` via their own metadata; this is the fallback.
+  return {
+    title: { default: "Status Check", template: "%s — Status Check" },
+    description: "Дедлайн-трекер з календарем і командою.",
+  };
+}
+
 export default async function LocaleLayout({
   children,
   params,

@@ -2,15 +2,17 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 import { cn } from "~/lib/utils";
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
+  const t = useTranslations("layout");
 
   return (
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      aria-label="Переключити тему"
+      aria-label={t("toggleTheme")}
       className={cn(
         "relative flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
         className,

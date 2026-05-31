@@ -15,6 +15,10 @@ interface CommitmentFormProps {
   onCancel: () => void;
 }
 
+// Limits mirror the server-side zod schema in commitment.ts.
+const TITLE_MAX = 255;
+const DESCRIPTION_MAX = 2000;
+
 function toDatetimeLocal(date?: Date | null): string {
   if (!date) return "";
   const d = new Date(date);
@@ -114,64 +118,101 @@ export function CommitmentForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {/* Title */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-foreground">
+        <label htmlFor="commitment-title" className="text-xs font-medium text-foreground">
           {t("commitment.title")}
           <span className="ml-0.5 text-destructive">*</span>
         </label>
         <input
+          id="commitment-title"
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => setTitle(e.target.value.slice(0, TITLE_MAX))}
+          maxLength={TITLE_MAX}
           placeholder={t("commitment.title")}
+          aria-invalid={!!errors.title}
+          aria-describedby={errors.title ? "commitment-title-error" : "commitment-title-counter"}
           className={cn(
             "h-9 rounded-md border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring",
             errors.title ? "border-destructive" : "border-border",
           )}
         />
-        {errors.title && (
-          <p className="text-xs text-destructive">{errors.title}</p>
-        )}
+        <div className="flex items-center justify-between">
+          {errors.title ? (
+            <p id="commitment-title-error" className="text-xs text-destructive">{errors.title}</p>
+          ) : (
+            <span />
+          )}
+          <span
+            id="commitment-title-counter"
+            className={cn(
+              "text-[10px] tabular-nums text-muted-foreground",
+              title.length === TITLE_MAX && "text-destructive",
+            )}
+          >
+            {title.length}/{TITLE_MAX}
+          </span>
+        </div>
       </div>
 
       {/* Description */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-foreground">
+        <label htmlFor="commitment-description" className="text-xs font-medium text-foreground">
           {t("commitment.description")}
         </label>
         <textarea
+          id="commitment-description"
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(e) =>
+            setDescription(e.target.value.slice(0, DESCRIPTION_MAX))
+          }
+          maxLength={DESCRIPTION_MAX}
           rows={3}
+          aria-describedby="commitment-description-counter"
           className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
         />
+        <div className="flex justify-end">
+          <span
+            id="commitment-description-counter"
+            className={cn(
+              "text-[10px] tabular-nums text-muted-foreground",
+              description.length === DESCRIPTION_MAX && "text-destructive",
+            )}
+          >
+            {description.length}/{DESCRIPTION_MAX}
+          </span>
+        </div>
       </div>
 
       {/* Deadline */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-foreground">
+        <label htmlFor="commitment-deadline" className="text-xs font-medium text-foreground">
           {t("commitment.deadline")}
           <span className="ml-0.5 text-destructive">*</span>
         </label>
         <input
+          id="commitment-deadline"
           type="datetime-local"
           value={deadline}
           onChange={(e) => setDeadline(e.target.value)}
+          aria-invalid={!!errors.deadline}
+          aria-describedby={errors.deadline ? "commitment-deadline-error" : undefined}
           className={cn(
             "h-9 rounded-md border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring",
             errors.deadline ? "border-destructive" : "border-border",
           )}
         />
         {errors.deadline && (
-          <p className="text-xs text-destructive">{errors.deadline}</p>
+          <p id="commitment-deadline-error" className="text-xs text-destructive">{errors.deadline}</p>
         )}
       </div>
 
       {/* Project */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-foreground">
+        <label htmlFor="commitment-project" className="text-xs font-medium text-foreground">
           {t("commitment.project")}
         </label>
         <select
+          id="commitment-project"
           value={projectId}
           onChange={(e) => setProjectId(e.target.value)}
           className="h-9 rounded-md border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
@@ -188,10 +229,11 @@ export function CommitmentForm({
       <div className="grid grid-cols-2 gap-3">
         {/* Executor */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-foreground">
+          <label htmlFor="commitment-executor" className="text-xs font-medium text-foreground">
             {t("commitment.executor")}
           </label>
           <select
+            id="commitment-executor"
             value={executorId}
             onChange={(e) => setExecutorId(e.target.value)}
             className="h-9 rounded-md border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
@@ -207,10 +249,11 @@ export function CommitmentForm({
 
         {/* Checker */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-foreground">
+          <label htmlFor="commitment-checker" className="text-xs font-medium text-foreground">
             {t("commitment.checker")}
           </label>
           <select
+            id="commitment-checker"
             value={checkerId}
             onChange={(e) => setCheckerId(e.target.value)}
             className="h-9 rounded-md border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"

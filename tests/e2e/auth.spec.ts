@@ -1,86 +1,120 @@
 import { test, expect } from "@playwright/test";
+import { BASE, TEST_PASSWORD, readUsers, gotoLogin, gotoRegister, login, register, uniqueEmail } from "./helpers";
 
-const BASE = "http://localhost:3333";
-const TIMESTAMP = Date.now();
-const TEST_EMAIL = `test.${TIMESTAMP}@playwright.test`;
-const TEST_PASSWORD = "testpassword123";
-const TEST_NAME = "Playwright User";
+test.describe("Auth — public pages", () => {
+  test("login page renders all controls (uk)", async ({ page }) => {
+    await gotoLogin(page, "uk");
+    await expect(page.locator("input#email")).toBeVisible();
+    await expect(page.locator("input#password")).toBeVisible();
+    await expect(page.locator("button[type='submit']")).toBeVisible();
+    await expect(page.locator("h1")).toContainText("Status Check");
+  });
 
-test.describe("Authentication", () => {
-  test("login page renders correctly", async ({ page }) => {
-    await page.goto(`${BASE}/uk/login`);
-    await expect(page.locator("input[type='email']")).toBeVisible();
-    await expect(page.locator("input[type='password']")).toBeVisible();
+  test("login page renders all controls (en)", async ({ page }) => {
+    await gotoLogin(page, "en");
+    await expect(page.locator("input#email")).toBeVisible();
+    await expect(page.locator("input#password")).toBeVisible();
     await expect(page.locator("button[type='submit']")).toBeVisible();
   });
 
-  test("register page renders correctly", async ({ page }) => {
-    await page.goto(`${BASE}/uk/register`);
+  test("register page renders all controls (uk)", async ({ page }) => {
+    await gotoRegister(page, "uk");
     await expect(page.locator("input#name")).toBeVisible();
     await expect(page.locator("input#email")).toBeVisible();
     await expect(page.locator("input#password")).toBeVisible();
     await expect(page.locator("input#confirmPassword")).toBeVisible();
   });
 
-  test("login with wrong credentials shows error", async ({ page }) => {
-    await page.goto(`${BASE}/uk/login`);
-    await page.fill("input[type='email']", "nonexistent.wrong@example.com");
-    await page.fill("input[type='password']", "wrongpassword123");
+  test("login: wrong credentials show error (uk)", async ({ page }) => {
+    await gotoLogin(page, "uk");
+    await page.fill("input#email", "nonexistent.user@example.com");
+    await page.fill("input#password", "wrongpassword123!");
     await page.click("button[type='submit']");
-    // Wait for button to stop being in loading state, then check for error
-    await expect(page.locator("button[type='submit']")).not.toHaveText("...", { timeout: 15000 });
-    await expect(page.locator("text=Невірна пошта або пароль")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("text=Невірна пошта або пароль")).toBeVisible({ timeout: 15_000 });
   });
 
-  test("register validation: passwords do not match", async ({ page }) => {
-    await page.goto(`${BASE}/uk/register`);
-    await page.fill("input#name", "Test User");
-    await page.fill("input#email", `mismatch.${TIMESTAMP}@test.com`);
-    await page.fill("input#password", "password123");
-    await page.fill("input#confirmPassword", "different456");
+  test("login: wrong credentials show error (en)", async ({ page }) => {
+    await gotoLogin(page, "en");
+    await page.fill("input#email", "nonexistent.user@example.com");
+    await page.fill("input#password", "wrongpassword123!");
+    await page.click("button[type='submit']");
+    await expect(page.locator("text=Invalid email or password")).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("register: passwords-mismatch validation", async ({ page }) => {
+    await gotoRegister(page, "uk");
+    await page.fill("input#name", "Test");
+    await page.fill("input#email", uniqueEmail("mismatch"));
+    await page.fill("input#password", "validpass1");
+    await page.fill("input#confirmPassword", "differentpass1");
     await page.click("button[type='submit']");
     await expect(page.locator("text=Паролі не збігаються")).toBeVisible();
   });
 
-  test("register validation: password too short", async ({ page }) => {
-    await page.goto(`${BASE}/uk/register`);
-    await page.fill("input#name", "Test User");
-    await page.fill("input#email", `short.${TIMESTAMP}@test.com`);
+  test("register: password-too-short validation", async ({ page }) => {
+    await gotoRegister(page, "uk");
+    await page.fill("input#name", "Test");
+    await page.fill("input#email", uniqueEmail("short"));
     await page.fill("input#password", "short");
     await page.fill("input#confirmPassword", "short");
     await page.click("button[type='submit']");
     await expect(page.locator("text=Мінімум 8 символів")).toBeVisible();
   });
 
-  test("register new user and redirect to calendar", async ({ page }) => {
-    await page.goto(`${BASE}/uk/register`);
-    await page.fill("input#name", TEST_NAME);
-    await page.fill("input#email", TEST_EMAIL);
-    await page.fill("input#password", TEST_PASSWORD);
-    await page.fill("input#confirmPassword", TEST_PASSWORD);
-    await page.click("button[type='submit']");
-
-    // Should redirect to /uk/calendar
-    await expect(page).toHaveURL(/\/uk\/calendar/, { timeout: 10000 });
-  });
-
-  test("login with valid credentials and redirect", async ({ page }) => {
-    await page.goto(`${BASE}/uk/login`);
-    await page.fill("input[type='email']", TEST_EMAIL);
-    await page.fill("input[type='password']", TEST_PASSWORD);
-    await page.click("button[type='submit']");
-
-    await expect(page).toHaveURL(/\/uk\/calendar/, { timeout: 10000 });
-  });
-
-  test("protected route redirects unauthenticated to login", async ({ page }) => {
-    // New context = no session
+  test("protected route redirects unauth user to login", async ({ page }) => {
     await page.goto(`${BASE}/uk/calendar`);
-    await expect(page).toHaveURL(/\/uk\/login/, { timeout: 5000 });
+    await expect(page).toHaveURL(/\/uk\/login/, { timeout: 10_000 });
   });
 
-  test("root / redirects to /uk/login when not authenticated", async ({ page }) => {
+  test("root / redirects unauth user to login", async ({ page }) => {
     await page.goto(`${BASE}/`);
-    await expect(page).toHaveURL(/\/uk\/login|\/uk\/calendar/, { timeout: 5000 });
+    await expect(page).toHaveURL(/\/uk\/(login|calendar)/, { timeout: 10_000 });
+  });
+
+  test("auth page redirects authenticated user to calendar", async ({ browser }) => {
+    const { admin } = readUsers();
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await login(page, admin.email, admin.password);
+    await page.goto(`${BASE}/uk/login`);
+    await expect(page).toHaveURL(/\/uk\/calendar/, { timeout: 10_000 });
+    await ctx.close();
+  });
+});
+
+test.describe("Auth — fresh registration", () => {
+  test("register a fresh user and land on calendar", async ({ browser }) => {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    const email = uniqueEmail("fresh");
+    await register(page, {
+      name: "Fresh User",
+      email,
+      password: TEST_PASSWORD,
+    });
+    await expect(page).toHaveURL(/\/uk\/calendar/);
+    await ctx.close();
+  });
+});
+
+test.describe("Auth — logout", () => {
+  // Use a dedicated, single-use user so global signOut() doesn't revoke the
+  // shared admin/member sessions used by other test files.
+  test("dedicated user can log out and is redirected to login", async ({ browser }) => {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    const email = uniqueEmail("logout");
+    await register(page, {
+      name: "Logout User",
+      email,
+      password: TEST_PASSWORD,
+    });
+    await expect(page).toHaveURL(/\/uk\/calendar/);
+
+    await page.click(
+      "button[aria-label='Вийти'], button[aria-label='Sign out']",
+    );
+    await expect(page).toHaveURL(/\/uk\/login/, { timeout: 15_000 });
+    await ctx.close();
   });
 });

@@ -55,6 +55,7 @@ export function CalendarFilters() {
       <select
         value={selectedProjectId}
         onChange={(e) => setProjectIds(e.target.value ? [e.target.value] : [])}
+        aria-label={t("filters.byProject")}
         className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
       >
         <option value="">{t("filters.allProjects")}</option>
@@ -68,6 +69,7 @@ export function CalendarFilters() {
       <select
         value={selectedCheckerId}
         onChange={(e) => setCheckerIds(e.target.value ? [e.target.value] : [])}
+        aria-label={t("filters.byChecker")}
         className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
       >
         <option value="">{t("filters.allCheckers")}</option>

@@ -6,7 +6,8 @@ export async function generateMetadata() {
   return { title: `${t("registerTitle")} — Status Check` };
 }
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  const t = await getTranslations("auth");
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-6 rounded-xl border border-border bg-card p-8 shadow-sm">
@@ -15,7 +16,7 @@ export default function RegisterPage() {
             Status Check
           </h1>
           <p className="text-sm text-muted-foreground">
-            Заповніть форму для реєстрації
+            {t("registerSubtitle")}
           </p>
         </div>
         <RegisterForm />

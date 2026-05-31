@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { format } from "date-fns";
+import { uk, enUS } from "date-fns/locale";
 import { Plus, CalendarDays } from "lucide-react";
 import { api } from "~/trpc/react";
 import { useFiltersStore } from "~/store/filters";
+import { useToast } from "~/store/toast";
 import { STATUS_COLORS } from "~/components/commitment/StatusBadge";
 import { CommitmentModal } from "~/components/commitment/CommitmentModal";
+import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import { CalendarFilters } from "./CalendarFilters";
 import type { EventClickArg, EventDropArg } from "@fullcalendar/core";
 import type { DateClickArg } from "@fullcalendar/interaction";
@@ -29,10 +33,25 @@ type ModalState =
   | { isOpen: true; mode: "create"; defaultDate?: Date }
   | { isOpen: true; mode: "view" | "edit"; commitmentId: string };
 
+interface PendingDrop {
+  id: string;
+  title: string;
+  oldDeadline: Date;
+  newDeadline: Date;
+  revert: () => void;
+}
+
 export function CalendarView() {
   const t = useTranslations();
+  const locale = useLocale();
+  const dateFnsLocale = locale === "uk" ? uk : enUS;
+  const toast = useToast();
   const { projectIds, checkerIds, statuses } = useFiltersStore();
   const [modal, setModal] = useState<ModalState>({ isOpen: false });
+  const [pendingDrop, setPendingDrop] = useState<PendingDrop | null>(null);
+  // Cache the rendered commitments so we can look up the original deadline
+  // (with original time-of-day) when the user drags to a new date.
+  const commitmentMapRef = useRef<Map<string, Date>>(new Map());
 
   const filters = {
     projectId: projectIds[0],
@@ -48,8 +67,19 @@ export function CalendarView() {
       : undefined,
   );
 
+  // Refresh the lookup map whenever the list updates.
+  if (commitments) {
+    const map = new Map<string, Date>();
+    for (const c of commitments) map.set(c.id, new Date(c.deadline));
+    commitmentMapRef.current = map;
+  }
+
   const updateDeadline = api.commitment.update.useMutation({
-    onSuccess: () => { void refetch(); },
+    onSuccess: () => {
+      toast.success(t("commitment.updated"));
+      void refetch();
+    },
+    onError: () => toast.error(t("errors.generic")),
   });
 
   const events = (commitments ?? []).map((c) => ({
@@ -63,6 +93,21 @@ export function CalendarView() {
     extendedProps: { status: c.status },
   }));
 
+  // Preserve the original time-of-day when a drag changes only the date.
+  // FullCalendar's `event.start` reflects the day the user dropped on; we
+  // graft the hours/minutes from the cached original deadline onto it.
+  const composeNewDeadline = (id: string, droppedAt: Date) => {
+    const original = commitmentMapRef.current.get(id) ?? droppedAt;
+    const out = new Date(droppedAt);
+    out.setHours(
+      original.getHours(),
+      original.getMinutes(),
+      original.getSeconds(),
+      original.getMilliseconds(),
+    );
+    return out;
+  };
+
   const handleEventClick = useCallback((arg: EventClickArg) => {
     setModal({ isOpen: true, mode: "view", commitmentId: arg.event.id });
   }, []);
@@ -73,14 +118,46 @@ export function CalendarView() {
 
   const handleEventDrop = useCallback(
     (arg: EventDropArg) => {
-      if (!arg.event.start) { arg.revert(); return; }
-      updateDeadline.mutate({
-        id: arg.event.id,
-        deadline: arg.event.start,
+      if (!arg.event.start) {
+        arg.revert();
+        return;
+      }
+      const id = arg.event.id;
+      const oldDeadline = commitmentMapRef.current.get(id) ?? arg.event.start;
+      const newDeadline = composeNewDeadline(id, arg.event.start);
+      // Same calendar day → nothing to confirm.
+      if (oldDeadline.toDateString() === newDeadline.toDateString()) {
+        arg.revert();
+        return;
+      }
+      setPendingDrop({
+        id,
+        title: arg.event.title,
+        oldDeadline,
+        newDeadline,
+        revert: () => arg.revert(),
       });
     },
-    [updateDeadline],
+    // composeNewDeadline only reads from a ref, no deps needed
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
+
+  const acceptDrop = () => {
+    if (!pendingDrop) return;
+    updateDeadline.mutate(
+      { id: pendingDrop.id, deadline: pendingDrop.newDeadline },
+      {
+        onSettled: () => setPendingDrop(null),
+        onError: () => pendingDrop.revert(),
+      },
+    );
+  };
+
+  const cancelDrop = () => {
+    pendingDrop?.revert();
+    setPendingDrop(null);
+  };
 
   const closeModal = useCallback(() => setModal({ isOpen: false }), []);
 
@@ -107,6 +184,15 @@ export function CalendarView() {
       {/* Filters */}
       <CalendarFilters />
 
+      {/* Inline empty-state hint — sits above the calendar instead of
+          covering it, so events are never hidden by the overlay. */}
+      {commitments?.length === 0 && (
+        <div className="flex items-center gap-2 rounded-md border border-dashed border-border bg-card px-3 py-2 text-xs text-muted-foreground">
+          <CalendarDays className="h-4 w-4 opacity-50" />
+          <span>{t("calendar.empty")}</span>
+        </div>
+      )}
+
       {/* Calendar */}
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-card">
         <FullCalendarComponent
@@ -115,13 +201,23 @@ export function CalendarView() {
           onDateClick={handleDateClick}
           onEventDrop={handleEventDrop}
         />
-        {commitments?.length === 0 && (
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-            <CalendarDays className="h-10 w-10 opacity-20" />
-            <p className="text-sm">{t("calendar.empty")}</p>
-          </div>
-        )}
       </div>
+
+      {/* Drag&drop deadline confirmation */}
+      <ConfirmDialog
+        open={!!pendingDrop}
+        title={t("calendar.dropConfirmTitle")}
+        description={
+          pendingDrop
+            ? `${pendingDrop.title}\n${format(pendingDrop.oldDeadline, "dd MMM yyyy", { locale: dateFnsLocale })} → ${format(pendingDrop.newDeadline, "dd MMM yyyy", { locale: dateFnsLocale })}`
+            : undefined
+        }
+        confirmLabel={t("common.confirm")}
+        cancelLabel={t("common.cancel")}
+        isPending={updateDeadline.isPending}
+        onConfirm={acceptDrop}
+        onCancel={cancelDrop}
+      />
 
       {/* Modal */}
       {modal.isOpen && modal.mode === "create" && (

@@ -35,9 +35,13 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       {error && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div
+          role="alert"
+          aria-live="polite"
+          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           {error}
         </div>
       )}
@@ -83,9 +87,10 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={loading}
+        aria-busy={loading}
         className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? "..." : t("login")}
+        {loading ? t("login") + "…" : t("login")}
       </button>
 
       <p className="text-center text-sm text-muted-foreground">

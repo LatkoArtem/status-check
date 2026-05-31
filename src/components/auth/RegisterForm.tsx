@@ -30,7 +30,7 @@ export function RegisterForm() {
 
     setLoading(true);
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signUp({
+    const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -39,7 +39,29 @@ export function RegisterForm() {
     });
 
     if (authError) {
-      setError(t("errors.registerFailed"));
+      // GoTrue returns several different shapes for "email already in use"
+      // depending on version. Match on code, status, and message text.
+      const msg = authError.message?.toLowerCase() ?? "";
+      const isDup =
+        authError.status === 422 ||
+        authError.code === "user_already_exists" ||
+        authError.code === "email_exists" ||
+        msg.includes("already registered") ||
+        msg.includes("already exists") ||
+        msg.includes("user already") ||
+        msg.includes("duplicate");
+      setError(
+        isDup ? t("errors.emailAlreadyExists") : t("errors.registerFailed"),
+      );
+      setLoading(false);
+      return;
+    }
+
+    // Some Supabase configurations return a 200 with `user.identities = []`
+    // when the email is already taken (and "confirm email" is off). Treat
+    // that as a duplicate too.
+    if (data?.user && data.user.identities?.length === 0) {
+      setError(t("errors.emailAlreadyExists"));
       setLoading(false);
       return;
     }
@@ -49,9 +71,13 @@ export function RegisterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       {error && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div
+          role="alert"
+          aria-live="polite"
+          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
           {error}
         </div>
       )}
@@ -135,9 +161,10 @@ export function RegisterForm() {
       <button
         type="submit"
         disabled={loading}
+        aria-busy={loading}
         className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? "..." : t("register")}
+        {loading ? t("register") + "…" : t("register")}
       </button>
 
       <p className="text-center text-sm text-muted-foreground">

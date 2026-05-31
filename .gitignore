@@ -2,6 +2,11 @@
 CLAUDE.md
 CLAUDE_CODE_PROMPT.md
 
+# Особисті нотатки — не комітимо
+COMMANDS.md
+TESTING.md
+QA_REPORT.md
+
 # Environment
 .env
 .env.local
@@ -42,6 +47,10 @@ coverage/
 # Playwright output
 test-results/
 playwright-report/
+playwright/
+
+# Lighthouse auto-generated reports
+tests/lighthouse/reports/
 
 # pnpm
 .pnpm-store/

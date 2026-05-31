@@ -8,6 +8,7 @@ import { X, Pencil, Trash2 } from "lucide-react";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { type CommitmentStatus } from "~/server/db/schema";
 import { useToast } from "~/store/toast";
+import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import { CommitmentForm } from "./CommitmentForm";
 import { StatusBadge, STATUS_COLORS } from "./StatusBadge";
 
@@ -42,6 +43,7 @@ export function CommitmentModal({
   const t = useTranslations();
   const backdropRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<ModalMode>(initialMode);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     setMode(initialMode);
@@ -98,9 +100,12 @@ export function CommitmentModal({
 
   const handleDelete = () => {
     if (!commitmentId) return;
-    if (window.confirm(t("commitment.deleteConfirm"))) {
-      deleteCommitment.mutate({ id: commitmentId });
-    }
+    setConfirmDelete(true);
+  };
+  const confirmDeleteAction = () => {
+    if (!commitmentId) return;
+    deleteCommitment.mutate({ id: commitmentId });
+    setConfirmDelete(false);
   };
 
   if (!isOpen) return null;
@@ -123,15 +128,21 @@ export function CommitmentModal({
     >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
-      <div className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="commitment-modal-title"
+        className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+          <h2 id="commitment-modal-title" className="text-sm font-semibold text-foreground">{title}</h2>
           <div className="flex items-center gap-1">
             {mode === "view" && canEdit && (
               <>
                 <button
                   onClick={() => setMode("edit")}
+                  aria-label={t("common.edit")}
                   className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   <Pencil className="h-3.5 w-3.5" />
@@ -139,6 +150,7 @@ export function CommitmentModal({
                 <button
                   onClick={handleDelete}
                   disabled={deleteCommitment.isPending}
+                  aria-label={t("common.delete")}
                   className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -147,12 +159,25 @@ export function CommitmentModal({
             )}
             <button
               onClick={onClose}
+              aria-label={t("common.close")}
               className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
         </div>
+
+        {/* Delete confirmation */}
+        <ConfirmDialog
+          open={confirmDelete}
+          destructive
+          title={t("commitment.deleteConfirm")}
+          confirmLabel={t("common.delete")}
+          cancelLabel={t("common.cancel")}
+          isPending={deleteCommitment.isPending}
+          onConfirm={confirmDeleteAction}
+          onCancel={() => setConfirmDelete(false)}
+        />
 
         {/* Content */}
         <div className="overflow-y-auto px-5 py-4">
