@@ -6,7 +6,7 @@ const connectionString = process.env.DATABASE_URL!;
 const isDocker = !!process.env.SUPABASE_INTERNAL_URL;
 const client = postgres(connectionString, {
   prepare: false,
-  max: 1,
+  max: 3,
   idle_timeout: 20,
   connect_timeout: 10,
   ...(!isDocker && { ssl: "require" }),
