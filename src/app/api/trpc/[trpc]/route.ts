@@ -9,12 +9,9 @@ const handler = (req: NextRequest) =>
     req,
     router: appRouter,
     createContext: () => createTRPCContext({ headers: req.headers }),
-    onError:
-      process.env.NODE_ENV === "development"
-        ? ({ path, error }) => {
-            console.error(`❌ tRPC [${path}]:`, error.message);
-          }
-        : undefined,
+    onError: ({ path, error }) => {
+      console.error(`❌ tRPC [${path}]:`, error.message, error.cause);
+    },
   });
 
 export { handler as GET, handler as POST };
