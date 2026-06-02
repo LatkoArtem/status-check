@@ -10,6 +10,8 @@ function makeQueryClient() {
     defaultOptions: {
       queries: {
         staleTime: 30 * 1000,
+        retry: 3,
+        retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
       },
       dehydrate: {
         serializeData: SuperJSON.serialize,
